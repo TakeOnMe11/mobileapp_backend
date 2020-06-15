@@ -23,26 +23,22 @@ class MobileAppApiView(View):
 
     def post(self, request):
         data = json.loads(request.body.decode('utf-8'))
-        experiments_ids = [d.get('id') for d in data]
+        experiments_ids = data.get('id')
 
-        results = (
-            Results.objects.filter(id__in=experiments_ids)
-        )
+        result = Results.objects.filter(id=int(experiments_ids)).first()
 
-        for d in data:
-            result = results.filter(id=d.get('id')).first()
+        result.name = data.get('name')
+        result.measdate = data.get('measdate')
+        result.comment = data.get('comment')
+        result.data = data.get('data')
 
-            result.name = d.get('name')
-            result.measdate = d.get('measdate')
-            result.comment = d.get('comment')
-            result.data = d.get('data')
-
-            # save changes (it's better to replace this to bulk_update
-            result.save()
+        # save changes (it's better to replace this to bulk_update
+        result.save()
 
         # Prepare data for json response
-        res = results.values('id', 'name', 'measdate', 'comment', 'data',
-                             'setid__name', 'setid__description',
-                             'typeid__description')
+        # res = result.values('id', 'name', 'measdate', 'comment', 'data',
+        #                      'setid__name', 'setid__description',
+        #                      'typeid__description')
+        res = {'id': result.id, 'name': result.name, 'measdate': result.measdate, 'comment': result.data}
 
         return HttpResponse(json.dumps(list(res), cls=DjangoJSONEncoder))
